@@ -67,3 +67,7 @@ python3 scripts/render_prompt_pack.py \
 - `visual-plan.md`：可读版视觉方案
 - `visual-plan.json`：机器可读版视觉方案
 - `prompts/page-01.md` 等逐页图片提示词
+
+## 许可证
+
+MIT License，Copyright (c) 2026 aduo2233。
