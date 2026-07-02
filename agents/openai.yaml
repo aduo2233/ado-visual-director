@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ado Visual Director"
+  short_description: "把选题转成有审美判断的视觉提示词包"
+  default_prompt: "Use $ado-visual-director 把这个选题转成视觉导演方案和图片提示词包。"
