@@ -11,6 +11,7 @@ from typing import Any
 
 PRESETS: dict[str, dict[str, Any]] = {
     "xiaohongshu": {"width": 1242, "height": 1660, "aspect_ratio": "3:4", "page_count": 6},
+    "xhs-tutorial": {"width": 1242, "height": 1660, "aspect_ratio": "3:4", "page_count": 8},
     "square": {"width": 1080, "height": 1080, "aspect_ratio": "1:1", "page_count": 1},
     "portrait-social": {"width": 1080, "height": 1350, "aspect_ratio": "4:5", "page_count": 4},
     "wide-hero": {"width": 1920, "height": 1080, "aspect_ratio": "16:9", "page_count": 1},
@@ -46,6 +47,30 @@ AI_MEDICAL_ADDON = (
     "病历和报告不能出现可识别个人信息。"
     "避免机器人医生、AI 大脑、赛博医院、神奇诊断和 AI 自主治疗暗示。"
 )
+
+XHS_TUTORIAL_ADDON = (
+    "小红书知识教程式：信息密度为 detailed，字多细节多，像可保存的操作手册。"
+    "允许步骤、短句、表单、命令行、真实操作截图感、便签、红笔圈注和仓库链接。"
+    "不做 30% 删除，只删除廉价装饰和重复无效内容。"
+    "文字必须模块化、分区清楚，避免长段落和看不清的小字。"
+)
+
+DENSITY_GUIDANCE = {
+    "minimal": (
+        "信息密度：minimal。字少、留白多、重点突出，适合投影或快速浏览。"
+        "大标题远距离可读，辅助文字不超过两句，流程节点控制在 3-5 个，"
+        "主视觉占据画面主要区域。执行 30% 删除实验。"
+    ),
+    "balanced": (
+        "信息密度：balanced。标题清楚，正文保留 2-4 条要点，有真实材料层和图解结构层，"
+        "手机端预览时仍能看懂。删除无用装饰，但保留必要解释。"
+    ),
+    "detailed": (
+        "信息密度：detailed。字多细节多，像教程和操作手册。允许更多步骤、短句、命令、"
+        "表单、批注和案例演示，但必须分区清楚、层级明确、手机端可读。"
+        "不做 30% 删除，只删除廉价装饰和重复无效内容。"
+    ),
+}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -93,9 +118,33 @@ def pick_dimensions(plan: dict[str, Any], args: argparse.Namespace) -> dict[str,
     return dimensions
 
 
-def normalize_plan(plan: dict[str, Any], dimensions: dict[str, Any]) -> dict[str, Any]:
+def pick_content_mode(plan: dict[str, Any], args: argparse.Namespace, dimensions: dict[str, Any]) -> str:
+    if args.content_mode:
+        return args.content_mode
+    if plan.get("content_mode"):
+        return str(plan["content_mode"])
+    if str(dimensions.get("platform")) == "xhs-tutorial":
+        return "xhs-tutorial"
+    return "knowledge-card" if int(dimensions.get("page_count", 1)) > 1 else "single-image"
+
+
+def pick_density(plan: dict[str, Any], args: argparse.Namespace, dimensions: dict[str, Any], content_mode: str) -> str:
+    if args.density:
+        return args.density
+    if plan.get("density"):
+        return str(plan["density"])
+    if content_mode == "xhs-tutorial":
+        return "detailed"
+    if str(dimensions.get("platform")) == "ppt-slide":
+        return "minimal"
+    return "balanced"
+
+
+def normalize_plan(plan: dict[str, Any], dimensions: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
     normalized = dict(plan)
     normalized.update(dimensions)
+    normalized["content_mode"] = pick_content_mode(plan, args, dimensions)
+    normalized["density"] = pick_density(plan, args, dimensions, normalized["content_mode"])
     normalized["aesthetic_style"] = normalized.get("aesthetic_style") or "研究档案式"
     normalized["style_system"] = normalized.get("style_system") or DEFAULT_STYLE_SYSTEM
 
@@ -125,7 +174,7 @@ def normalize_plan(plan: dict[str, Any], dimensions: dict[str, Any]) -> dict[str
         "视觉命题清楚",
         "缩小到预览尺寸时主角仍然明确",
         "每页只讲一个意思",
-        "已经完成 30% 删除实验",
+        "删除策略符合信息密度要求",
         "没有残留廉价 AI 视觉套路",
     ]
     return normalized
@@ -144,14 +193,21 @@ def format_negative(items: list[str]) -> str:
 
 
 def platform_guidance(plan: dict[str, Any]) -> str:
-    if str(plan.get("platform", "")) != "ppt-slide":
-        return ""
-    return (
-        "\nPPT 演示页要求：适合 16:9 投影观看，四周保留安全边距，"
-        "大标题远距离可读，主视觉占据中央主要区域，辅助文字不超过两句，"
-        "流程节点控制在 3-5 个，整体少字、高对比、强层级。"
-        "避免企业汇报 PPT 感、复杂表格、密集小字和装饰性卡片堆。\n"
-    )
+    guidance = []
+    density = str(plan.get("density", "balanced"))
+    if density in DENSITY_GUIDANCE:
+        guidance.append(DENSITY_GUIDANCE[density])
+    if str(plan.get("platform", "")) == "ppt-slide":
+        guidance.append(
+            "PPT 演示页要求：适合 16:9 投影观看，四周保留安全边距，"
+            "大标题远距离可读，主视觉占据中央主要区域。"
+            "如果 density=minimal，整体少字、高对比、强层级；"
+            "如果 density=detailed，允许更多步骤、速查表、批注和证据材料，但必须分区清楚。"
+            "避免企业汇报 PPT 感、复杂表格、密集小字和装饰性卡片堆。"
+        )
+    if str(plan.get("content_mode", "")) == "xhs-tutorial" or str(plan.get("platform", "")) == "xhs-tutorial":
+        guidance.append(XHS_TUTORIAL_ADDON)
+    return "\n" + "\n".join(guidance) + "\n" if guidance else ""
 
 
 def render_page_prompt(plan: dict[str, Any], page: dict[str, Any]) -> str:
@@ -173,6 +229,38 @@ def render_page_prompt(plan: dict[str, Any], page: dict[str, Any]) -> str:
 风格与材质：
 {plan.get("style_system", "")}
 {page.get("color_materials", "")}
+
+避免出现：
+{negative_prompts}
+"""
+    elif str(plan.get("content_mode", "")) == "xhs-tutorial" or str(plan.get("platform", "")) == "xhs-tutorial":
+        base = f"""小红书知识教程式单页，比例 {plan["aspect_ratio"]}，尺寸 {plan["width"]}x{plan["height"]}，第 {page["page"]} 页。
+
+内容模式：xhs-tutorial
+信息密度：{plan.get("density", "detailed")}
+
+视觉命题：{plan.get("visual_thesis", "")}
+主角：{plan.get("protagonist", "")}
+视觉态度：{plan.get("visual_attitude", "")}
+母题/系统：{plan.get("visual_motif", "")}
+
+现实场景层：
+{page.get("real_scene", "")}
+
+教程结构层：
+{page.get("diagram_flow", "")}
+
+文字层：
+主标题：“{page.get("title", "")}”
+辅助文字：“{page.get("body_text", "")}”
+页码：{page.get("page", "")}
+必要时加入步骤编号、速查表、命令行、表单、便签、红笔批注、仓库链接、真实操作截图感。
+
+风格：
+{plan.get("style_system", DEFAULT_STYLE_SYSTEM)}
+
+色彩与材质：
+{page.get("color_materials", plan.get("style_system", ""))}
 
 避免出现：
 {negative_prompts}
@@ -220,6 +308,8 @@ def render_plan_markdown(plan: dict[str, Any]) -> str:
         f"- 平台：{plan.get('platform')}",
         f"- 尺寸：{plan.get('width')}x{plan.get('height')}（{plan.get('aspect_ratio')}）",
         f"- 页数：{plan.get('page_count')}",
+        f"- 内容模式：{plan.get('content_mode', '')}",
+        f"- 信息密度：{plan.get('density', '')}",
         f"- 审美风格：{plan.get('aesthetic_style', '研究档案式')}",
         f"- 受众：{plan.get('audience', '')}",
         f"- 核心判断：{plan.get('core_claim', '')}",
@@ -276,6 +366,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", required=True, type=Path, help="visual_plan.json 路径")
     parser.add_argument("--out-dir", required=True, type=Path, help="输出目录")
     parser.add_argument("--preset", choices=sorted(PRESETS), help="平台预设")
+    parser.add_argument("--content-mode", choices=["single-image", "knowledge-card", "xhs-tutorial"], help="内容形态")
+    parser.add_argument("--density", choices=["minimal", "balanced", "detailed"], help="信息密度")
     parser.add_argument("--width", type=int, help="自定义宽度")
     parser.add_argument("--height", type=int, help="自定义高度")
     parser.add_argument("--aspect-ratio", help="自定义比例，例如 4:5")
@@ -287,7 +379,7 @@ def main() -> None:
     args = parse_args()
     raw_plan = load_json(args.input)
     dimensions = pick_dimensions(raw_plan, args)
-    plan = normalize_plan(raw_plan, dimensions)
+    plan = normalize_plan(raw_plan, dimensions, args)
     write_outputs(plan, args.out_dir)
     print(f"已生成 {len(plan['pages'])} 个提示词，输出目录：{args.out_dir}")
 

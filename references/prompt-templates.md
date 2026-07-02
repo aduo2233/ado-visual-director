@@ -9,6 +9,8 @@
   "topic": "",
   "audience": "",
   "platform": "xiaohongshu",
+  "content_mode": "knowledge-card",
+  "density": "balanced",
   "width": 1242,
   "height": 1660,
   "aspect_ratio": "3:4",
@@ -70,6 +72,43 @@
 {negative_prompts}
 ```
 
+## 小红书教程式知识卡片
+
+用户要求教程式、多字多细节、操作手册、安装教程或不用 30% 删除时使用：
+
+```text
+小红书知识教程式单页，比例 {aspect_ratio}，尺寸 {width}x{height}，第 {page} 页。
+
+内容模式：xhs-tutorial
+信息密度：detailed，字多细节多，像可保存的操作手册；不做 30% 删除，只做去噪但不减信息。
+
+视觉命题：{visual_thesis}
+主角：{protagonist}
+视觉态度：{visual_attitude}
+母题/系统：{visual_motif}
+
+现实场景层：
+{real_scene}
+
+教程结构层：
+{diagram_flow}
+
+文字层：
+主标题：“{title}”
+辅助文字：“{body_text}”
+页码：{page}
+必要时加入：步骤编号、速查表、命令行、表单、便签、红笔批注、仓库链接、真实操作截图感。
+
+风格：
+{style_system}
+
+色彩与材质：
+{color_materials}
+
+避免出现：
+{negative_prompts}
+```
+
 ## 单张图 / Hero 图
 
 ```text
@@ -92,6 +131,17 @@
 
 避免出现：
 {negative_prompts}
+```
+
+## PPT 信息密度追加
+
+`ppt-slide` 默认追加 `minimal`。用户要求“字多细节多、教程页、培训页”时追加 `detailed`。
+
+```text
+PPT 信息密度：{density}
+minimal：字少、留白多、重点突出，适合投影观看；辅助文字不超过两句，流程节点 3-5 个。
+balanced：保留 2-4 条说明，有清楚标题、主视觉和少量解释。
+detailed：字多细节多，像课程讲义或教程页；允许步骤、速查表、批注和证据材料，但必须分区清楚、手机和投影都可读。
 ```
 
 ## AI+医学补充

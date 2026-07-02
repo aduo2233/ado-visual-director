@@ -11,10 +11,12 @@
 ## 适合做什么
 
 - 把一个选题做成小红书知识卡片视觉方案。
+- 把文章或工具说明做成“小红书知识教程式”卡片：字多、细节多、像操作手册。
 - 把公众号文章拆成 4 页、6 页或 8 页图文提示词。
 - 给 AI+医学、AI产品、Agent、工作流、评估、医疗产品等主题做专业视觉方向。
 - 为单张海报、封面图、横版 Hero 图生成视觉导演方案。
 - 为 PPT、课程、演讲、汇报生成 16:9 单页配图提示词。
+- PPT 可以选择“字多细节多”或“字少留白多重点突出”两种版本。
 - 用户直接说“生图、生成图片、出图”时，按视觉方案继续调用可用生图工具。
 - 给已有图片方案做审美检查：删掉模板感、PPT感、机器人医生、AI大脑、蓝紫渐变等廉价套路。
 - 按自定义尺寸输出提示词，比如 `1080x1350`、`1242x1660`、`1920x1080`。
@@ -106,6 +108,18 @@ Use $ado-visual-director
 ……
 ```
 
+如果想做教程式小红书卡片，可以明确说：
+
+```text
+Use $ado-visual-director
+
+把这篇文章做成小红书知识教程式卡片。
+要求：字多一点，细节多一点，像操作手册，不用做30%删除。
+页数：8页
+尺寸：1242x1660
+里面可以放真实操作截图做演示。
+```
+
 ## 典型使用场景
 
 ### 1. 小红书知识卡片
@@ -126,6 +140,32 @@ Use $ado-visual-director 把这个主题做成6页小红书知识卡片：
 - 每页图片提示词
 - 否决清单
 - 30%删除实验检查
+
+### 1.1 小红书知识教程式
+
+```text
+Use $ado-visual-director 把这篇文章做成小红书知识教程式卡片：
+字多一点，细节多一点，像教程和操作手册。
+页数8页，尺寸1242x1660。
+不用删除30%，但要去掉廉价装饰。
+可以把我的操作截图放在1-2页里做演示。
+```
+
+它会自动使用：
+
+- 预设：`xhs-tutorial`
+- 尺寸：`1242x1660`
+- 默认页数：`8`
+- 信息密度：`detailed`
+- 删除策略：不做30%删除，只做去噪但不减信息
+
+适合：
+
+- 安装教程
+- Skill/Prompt/Agent 使用手册
+- 工作流拆解
+- 案例演示
+- 需要放真实操作图的教程卡
 
 ### 2. AI+医学视觉方案
 
@@ -173,6 +213,25 @@ PPT 预设会默认使用：
 - 页数：`1`
 - 排版：标题区 + 主视觉区 + 少量辅助说明
 - 要求：适合投影观看，安全边距充足，大标题远距离可读，流程节点控制在 3-5 个
+- 信息密度：默认 `minimal`，也就是字少、留白多、重点突出
+
+如果要字多细节多的 PPT 教程页，可以这样说：
+
+```text
+Use $ado-visual-director 给这个主题做一张PPT教程页配图：
+AI医学产品真正重要的是责任链，而不是机器人医生。
+使用ppt-slide预设。
+信息密度：字多细节多，像课程讲义。
+```
+
+如果要字少留白多的演示页，可以这样说：
+
+```text
+Use $ado-visual-director 给这个主题做一张PPT演示页配图：
+AI医学产品真正重要的是责任链，而不是机器人医生。
+使用ppt-slide预设。
+信息密度：字少留白多，重点突出。
+```
 
 它会避免：
 
@@ -249,6 +308,7 @@ AI医学产品真正重要的是责任链，而不是机器人医生。
 | 预设 | 尺寸 | 比例 | 默认页数 | 用途 |
 | --- | --- | --- | ---: | --- |
 | `xiaohongshu` | 1242x1660 | 3:4 | 6 | 小红书竖版知识图文 |
+| `xhs-tutorial` | 1242x1660 | 3:4 | 8 | 小红书教程式知识卡片 |
 | `square` | 1080x1080 | 1:1 | 1 | 方图 |
 | `portrait-social` | 1080x1350 | 4:5 | 4 | 竖版社媒图 |
 | `wide-hero` | 1920x1080 | 16:9 | 1 | 横版封面、Hero 图 |
@@ -313,6 +373,8 @@ AI医学产品真正重要的是责任链，而不是机器人医生。
    - 是否完成30%删除实验
 ```
 
+当 `density=detailed` 或 `content_mode=xhs-tutorial` 时，质量检查会改成“去噪但不减信息”，不会强制执行30%删除。
+
 ## 使用脚本生成提示词包
 
 这个仓库里有一个脚本：
@@ -357,6 +419,37 @@ python3 scripts/render_prompt_pack.py \
   --preset ppt-slide
 ```
 
+### 指定小红书教程式预设
+
+```bash
+python3 scripts/render_prompt_pack.py \
+  --input visual_plan.json \
+  --out-dir output \
+  --preset xhs-tutorial \
+  --content-mode xhs-tutorial \
+  --density detailed
+```
+
+### 指定 PPT 信息密度
+
+```bash
+python3 scripts/render_prompt_pack.py \
+  --input visual_plan.json \
+  --out-dir output \
+  --preset ppt-slide \
+  --density minimal
+```
+
+或字多细节多：
+
+```bash
+python3 scripts/render_prompt_pack.py \
+  --input visual_plan.json \
+  --out-dir output \
+  --preset ppt-slide \
+  --density detailed
+```
+
 ### 自定义尺寸和页数
 
 ```bash
@@ -378,6 +471,8 @@ python3 scripts/render_prompt_pack.py \
   "topic": "AI辅助影像诊断的责任链",
   "audience": "医疗AI产品经理",
   "platform": "portrait-social",
+  "content_mode": "knowledge-card",
+  "density": "balanced",
   "domain": "AI+医学",
   "aesthetic_style": "研究档案式",
   "core_claim": "AI医学产品必须把责任链画清楚",
