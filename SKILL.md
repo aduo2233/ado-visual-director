@@ -1,6 +1,6 @@
 ---
 name: ado-visual-director
-description: 阿多小筑视觉导演与图片提示词生成技能。把选题、文章、简报或创意需求转成视觉命题、页面结构、可自定义尺寸的图片提示词包和质量检查清单。用户提到设计哲学、小红书图片、知识卡片、视觉导演、提示词包、AI+医学视觉设计、自定义图片尺寸、visual direction、prompt pack 时使用。
+description: 阿多小筑视觉导演与图片提示词生成技能。把选题、文章、简报或创意需求转成视觉命题、页面结构、可自定义尺寸的图片提示词包和质量检查清单。用户提到设计哲学、小红书图片、知识卡片、PPT配图、幻灯片视觉、视觉导演、提示词包、AI+医学视觉设计、自定义图片尺寸、visual direction、prompt pack 时使用。
 ---
 
 # Ado Visual Director

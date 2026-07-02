@@ -14,6 +14,7 @@ PRESETS: dict[str, dict[str, Any]] = {
     "square": {"width": 1080, "height": 1080, "aspect_ratio": "1:1", "page_count": 1},
     "portrait-social": {"width": 1080, "height": 1350, "aspect_ratio": "4:5", "page_count": 4},
     "wide-hero": {"width": 1920, "height": 1080, "aspect_ratio": "16:9", "page_count": 1},
+    "ppt-slide": {"width": 1920, "height": 1080, "aspect_ratio": "16:9", "page_count": 1},
 }
 
 DEFAULT_NEGATIVES = [
@@ -131,6 +132,17 @@ def format_negative(items: list[str]) -> str:
     return "; ".join(items)
 
 
+def platform_guidance(plan: dict[str, Any]) -> str:
+    if str(plan.get("platform", "")) != "ppt-slide":
+        return ""
+    return (
+        "\nPPT 演示页要求：适合 16:9 投影观看，四周保留安全边距，"
+        "大标题远距离可读，主视觉占据中央主要区域，辅助文字不超过两句，"
+        "流程节点控制在 3-5 个，整体少字、高对比、强层级。"
+        "避免企业汇报 PPT 感、复杂表格、密集小字和装饰性卡片堆。\n"
+    )
+
+
 def render_page_prompt(plan: dict[str, Any], page: dict[str, Any]) -> str:
     negative_prompts = format_negative(as_list(page.get("negative_prompts")) or as_list(plan.get("negative_prompts")))
     if int(plan.get("page_count", 1)) == 1:
@@ -182,6 +194,7 @@ def render_page_prompt(plan: dict[str, Any], page: dict[str, Any]) -> str:
 避免出现：
 {negative_prompts}
 """
+    base += platform_guidance(plan)
     if is_ai_medical(plan):
         base += f"\n{AI_MEDICAL_ADDON}\n"
     return base
