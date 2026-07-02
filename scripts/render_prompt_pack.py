@@ -17,6 +17,15 @@ PRESETS: dict[str, dict[str, Any]] = {
     "ppt-slide": {"width": 1920, "height": 1080, "aspect_ratio": "16:9", "page_count": 1},
 }
 
+DEFAULT_STYLE_SYSTEM = (
+    "研究档案式编辑设计。纸白和冷灰为底，理性蓝结构线，克制黑色标题，"
+    "真实工作材料，证据层次，轻微颗粒质感，只在帮助理解时加入少量手写批注、"
+    "圈画、对号/叉号或签字笔痕迹。画面先结构后装饰，少字，高层级，"
+    "避免通用AI海报感、蓝紫渐变科技风、3D图标堆和PPT卡片感。"
+)
+
+DEFAULT_COLOR_MATERIALS = "纸白、冷灰、理性蓝结构线、克制黑色标题、少量红色批注、轻微颗粒质感"
+
 DEFAULT_NEGATIVES = [
     "机器人主角",
     "AI 大脑",
@@ -87,6 +96,8 @@ def pick_dimensions(plan: dict[str, Any], args: argparse.Namespace) -> dict[str,
 def normalize_plan(plan: dict[str, Any], dimensions: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(plan)
     normalized.update(dimensions)
+    normalized["aesthetic_style"] = normalized.get("aesthetic_style") or "研究档案式"
+    normalized["style_system"] = normalized.get("style_system") or DEFAULT_STYLE_SYSTEM
 
     pages = normalized.get("pages")
     if not isinstance(pages, list) or not pages:
@@ -106,7 +117,7 @@ def normalize_plan(plan: dict[str, Any], dimensions: dict[str, Any]) -> dict[str
         page.setdefault("real_scene", "与主题相关的真实材料，以证据方式排列")
         page.setdefault("diagram_flow", "一条简单的证据链或责任路径")
         page.setdefault("text_layer", page.get("title", ""))
-        page.setdefault("color_materials", normalized.get("style_system", "研究档案式编辑设计"))
+        page.setdefault("color_materials", normalized.get("color_materials", DEFAULT_COLOR_MATERIALS))
         page["negative_prompts"] = as_list(page.get("negative_prompts")) or as_list(normalized.get("negative_prompts")) or DEFAULT_NEGATIVES
 
     normalized["negative_prompts"] = as_list(normalized.get("negative_prompts")) or DEFAULT_NEGATIVES
@@ -186,7 +197,7 @@ def render_page_prompt(plan: dict[str, Any], page: dict[str, Any]) -> str:
 页码：{page.get("page", "")}
 
 风格：
-研究档案式编辑设计。纸白和冷灰为底，理性蓝结构线，克制黑色标题，真实工作材料，证据层次，轻微颗粒质感，只在帮助理解时加入少量手写批注。
+{plan.get("style_system", DEFAULT_STYLE_SYSTEM)}
 
 色彩与材质：
 {page.get("color_materials", plan.get("style_system", ""))}
@@ -209,6 +220,7 @@ def render_plan_markdown(plan: dict[str, Any]) -> str:
         f"- 平台：{plan.get('platform')}",
         f"- 尺寸：{plan.get('width')}x{plan.get('height')}（{plan.get('aspect_ratio')}）",
         f"- 页数：{plan.get('page_count')}",
+        f"- 审美风格：{plan.get('aesthetic_style', '研究档案式')}",
         f"- 受众：{plan.get('audience', '')}",
         f"- 核心判断：{plan.get('core_claim', '')}",
         f"- 视觉命题：{plan.get('visual_thesis', '')}",
