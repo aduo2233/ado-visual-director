@@ -1,4 +1,4 @@
 interface:
   display_name: "Ado Visual Director"
-  short_description: "生成视觉导演方案、小红书教程卡和PPT配图提示词"
-  default_prompt: "Use $ado-visual-director 把这个选题转成视觉导演方案，可选择小红书教程卡或PPT信息密度。"
+  short_description: "生成视觉导演方案、小红书图文和PPT配图提示词，科技优先冷蓝，医学优先档案风"
+  default_prompt: "Use $ado-visual-director 把这个选题转成视觉导演方案；科技类优先蓝色冷感科技编辑风，医学类优先研究档案式医学视觉。"
